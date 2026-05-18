@@ -1,28 +1,43 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { connectDB, getDb } from './config/db.js';
 
-// Load environment configurations
+
 dotenv.config();
+
+
+connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Essential Global Middleware
+
 app.use(cors());
 app.use(express.json());
 
-// API Health Check Route
-app.get('/api/health', (req, res) => {
+
+app.get('/api/health', async (req, res) => {
+    let dbStatus = 'disconnected';
+    try {
+
+        const db = getDb();
+        await db.command({ ping: 1 });
+        dbStatus = 'connected';
+    } catch (err) {
+        dbStatus = 'error';
+    }
+
     res.status(200).json({
         status: 'healthy',
+        database: dbStatus,
+        driver: 'native-mongodb-node-driver',
         timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        environment: process.env.NODE_ENV || 'development'
+        uptime: process.uptime()
     });
 });
 
-// Fallback for unmatched API endpoints
+
 app.use('*', (req, res) => {
     res.status(404).json({
         success: false,
@@ -30,7 +45,7 @@ app.use('*', (req, res) => {
     });
 });
 
-// Start listening for inbound traffic
+
 app.listen(PORT, () => {
     console.log(`=================================`);
     console.log(`🚀 Server running in ${process.env.NODE_ENV || 'development'} mode`);
