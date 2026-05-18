@@ -12,6 +12,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+
 const client = new MongoClient(process.env.MONGO_URI);
 let db;
 
@@ -62,14 +63,10 @@ app.get('/api/doctors/:id', async (req, res) => {
 });
 
 
-
-
 app.post('/api/appointments', async (req, res) => {
     try {
         const appointmentsCollection = db.collection('appointments');
-
         const { doctorId, doctorName, doctorSpecialty, date, timeSlot, userEmail, userName } = req.body;
-
 
         const newAppointment = {
             doctorId,
@@ -83,9 +80,7 @@ app.post('/api/appointments', async (req, res) => {
             createdAt: new Date()
         };
 
-
         const result = await appointmentsCollection.insertOne(newAppointment);
-
         res.status(201).json({
             success: true,
             message: "Appointment booked successfully!",
@@ -100,13 +95,28 @@ app.post('/api/appointments', async (req, res) => {
 app.get('/api/appointments', async (req, res) => {
     try {
         const appointmentsCollection = db.collection('appointments');
-
-        // Fetch all bookings from the collection and sort them by newest first
         const allAppointments = await appointmentsCollection.find({}).sort({ createdAt: -1 }).toArray();
-
         res.json(allAppointments);
     } catch (error) {
         res.status(500).json({ message: "Failed to fetch appointments" });
+    }
+});
+
+
+app.delete('/api/appointments/:id', async (req, res) => {
+    try {
+        const appointmentsCollection = db.collection('appointments');
+        const appointmentId = req.params.id;
+
+        const result = await appointmentsCollection.deleteOne({ _id: new ObjectId(appointmentId) });
+
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ message: "Appointment not found" });
+        }
+
+        res.json({ success: true, message: "Appointment cancelled successfully!" });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to cancel appointment" });
     }
 });
 
