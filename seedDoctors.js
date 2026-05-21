@@ -1,11 +1,13 @@
-export async function seedDoctorsCollection(db) {
+const { ObjectId } = require('mongodb');
+
+async function seedDoctorsCollection(db) {
     try {
         const doctorsCollection = db.collection("doctors");
         const count = await doctorsCollection.countDocuments();
 
-        // If you want to force re-seeding to get all 8, we check if it's less than 8
+        // If collection has less than 8 items, re-seed cleanly
         if (count < 8) {
-            // Clear out the old 3 entries first so we don't get duplicates
+            // Clear out old data to avoid duplicates
             await doctorsCollection.deleteMany({});
 
             const sampleDoctors = [
@@ -92,3 +94,5 @@ export async function seedDoctorsCollection(db) {
         console.error("❌ Seeding process error:", error);
     }
 }
+
+module.exports = { seedDoctorsCollection };

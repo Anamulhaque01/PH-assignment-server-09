@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Backend engine for DocAppoint healthcare platform",
   "main": "index.js",
-  "type": "module",
+  
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js"
@@ -17,6 +17,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-rate-limit": "^8.5.2",
+    "google-auth-library": "^10.6.2",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.2.0",
     "morgan": "^1.10.1"
