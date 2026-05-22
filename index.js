@@ -156,6 +156,9 @@ app.post('/api/auth/login', async (req, res) => {
 
 app.get('/api/doctors', async (req, res) => {
     try {
+        // Fallback protection: Explicitly verify references are initialized
+        const diagnosticCollection = doctorsCollection || client.db("docAppointDB").collection("doctors");
+
         const searchParam = req.query.search || "";
         let query = {};
 
@@ -163,10 +166,11 @@ app.get('/api/doctors', async (req, res) => {
             query = { name: { $regex: searchParam, $options: 'i' } };
         }
 
-        const result = await doctorsCollection.find(query).toArray();
+        const result = await diagnosticCollection.find(query).toArray();
         res.json(result);
     } catch (error) {
-        res.status(500).json({ message: "Failed parsing physician directory collection data." });
+        console.error("Internal Route Error Detail:", error); // This logs inside your Vercel Dashboard logs console panel!
+        res.status(500).json({ message: "Failed parsing entire physician directory collection data." });
     }
 });
 
