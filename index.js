@@ -54,12 +54,18 @@ let db, usersCollection, doctorsCollection, appointmentsCollection;
 // ==========================================
 // ⚡ SERVERLESS DATABASE CONNECTION MIDDLEWARE
 // ==========================================
+// ==========================================
+// ⚡ OPTIMIZED SERVERLESS DB CONNECTION MIDDLEWARE
+// ==========================================
 app.use(async (req, res, next) => {
     try {
+        // Establish a fresh connection if client isn't initialized or topology is dead
         if (!client.topology || !client.topology.isConnected()) {
+            console.log("🔄 Topology closed or absent. Opening fresh MongoDB connection pool...");
             await client.connect();
         }
-        // Initialize references globally
+
+        // Always cleanly resolve dynamic cluster context pools on each request step
         db = client.db("docAppointDB");
         usersCollection = db.collection("users");
         doctorsCollection = db.collection("doctors");
@@ -67,8 +73,8 @@ app.use(async (req, res, next) => {
 
         next();
     } catch (err) {
-        console.error("Database connection failure:", err);
-        res.status(500).json({ message: "Database connection failed." });
+        console.error("❌ Critical Serverless Database connection failure:", err);
+        res.status(500).json({ message: "Database infrastructure connection timeout." });
     }
 });
 
