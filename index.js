@@ -8,21 +8,46 @@ const { OAuth2Client } = require('google-auth-library');
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Middleware configuration
+// ==========================================
+// 🔐 FIXED CORS CONFIGURATION FOR PRODUCTION
+// ==========================================
+const allowedOrigins = [
+    'http://localhost:3000',
+    // ⚠️ REPLACE THE URL BELOW WITH YOUR ACTUAL DEPLOYED VERCEL FRONTEND URL LATER
+    'https://your-frontend-project-name.vercel.app'
+];
+
 app.use(cors({
-    origin: ['http://localhost:3000'],
-    credentials: true
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.indexOf(origin) === -1) {
+            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 app.use(express.json());
 
 // Initialize Google OAuth2 Client Channel
 const oAuth2Client = new OAuth2Client(
-    process.env.GOOGLE_CLIENT_ID,
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
     'postmessage'
 );
 
 const uri = process.env.MONGO_URI;
+
+// Security check to catch empty environment variable handshakes early
+if (!uri) {
+    console.error("❌ CRITICAL EXCEPTION: MONGO_URI variable is completely missing inside process.env!");
+}
 
 const client = new MongoClient(uri, {
     serverApi: {
@@ -32,7 +57,7 @@ const client = new MongoClient(uri, {
     }
 });
 
-// 🌟 DIRECT INLINE SEEDER FUNCTION (No external require file needed!)
+// 🌟 DIRECT INLINE SEEDER FUNCTION
 async function seedDoctorsCollection(db) {
     try {
         const doctorsCollection = db.collection("doctors");
@@ -152,7 +177,7 @@ async function run() {
 
                 const ticket = await oAuth2Client.verifyIdToken({
                     idToken: tokens.id_token,
-                    audience: process.env.GOOGLE_CLIENT_ID,
+                    audience: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
                 });
 
                 const { name, email, picture } = ticket.getPayload();
@@ -339,6 +364,11 @@ app.get('/', (req, res) => {
     res.send('DocAppoint Server Engine is Operational.');
 });
 
-app.listen(port, () => {
-    console.log(`Server executing live across workspace port: ${port}`);
-});
+// Required conditional initialization for Serverless deployment platforms
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(port, () => {
+        console.log(`Server executing live across workspace port: ${port}`);
+    });
+}
+
+module.exports = app;
