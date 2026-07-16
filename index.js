@@ -13,7 +13,8 @@ const port = process.env.PORT || 5000;
 // ==========================================
 const allowedOrigins = [
     'http://localhost:3000',
-    'https://ph-assignment-client-09.vercel.app' // Replace with your frontend domain when ready
+    'https://ph-assignment-client-09.vercel.app', // Replace with your frontend domain when ready
+    'https://doc-appoint-client-five.vercel.app'
 ];
 
 app.use(cors({
